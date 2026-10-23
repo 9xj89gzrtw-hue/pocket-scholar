@@ -25,27 +25,34 @@ class KnowledgeBase(private val context: Context) {
 
     fun load(): Int {
         val started = System.currentTimeMillis()
-        context.assets.open("knowledge/pack.jsonl").bufferedReader().useLines { lines ->
-            for (line in lines) {
-                if (line.isBlank()) continue
-                val json = runCatching { JSONObject(line) }.getOrNull() ?: continue
-                val title = json.optString("title").ifBlank { continue }
-                val text = json.optString("extract").ifBlank { continue }
-                val description = json.optString("description")
-                val tokens = tokenize("$title $description $text").take(220)
-                if (tokens.isEmpty()) continue
-                docs.add(Doc(title, text, description))
-                val tf = HashMap<String, Int>()
-                for (token in tokens) tf[token] = (tf[token] ?: 0) + 1
-                termFreqs.add(tf)
-                lengths.add(tokens.size)
-                for (token in tf.keys) docFrequency[token] = (docFrequency[token] ?: 0) + 1
+        context.assets.open("knowledge/pack.jsonl").bufferedReader().use { reader ->
+            var line = reader.readLine()
+            while (line != null) {
+                index(line)
+                line = reader.readLine()
             }
         }
         averageLength = if (lengths.isEmpty()) 1.0 else lengths.average()
         android.util.Log.i("PocketScholar",
             "loaded ${docs.size} articles in ${System.currentTimeMillis() - started} ms")
         return docs.size
+    }
+
+    private fun index(line: String) {
+        if (line.isBlank()) return
+        val json = runCatching { JSONObject(line) }.getOrNull() ?: return
+        val title = json.optString("title")
+        val text = json.optString("extract")
+        if (title.isBlank() || text.isBlank()) return
+        val description = json.optString("description")
+        val tokens = tokenize("$title $description $text").take(220)
+        if (tokens.isEmpty()) return
+        docs.add(Doc(title, text, description))
+        val tf = HashMap<String, Int>()
+        for (token in tokens) tf[token] = (tf[token] ?: 0) + 1
+        termFreqs.add(tf)
+        lengths.add(tokens.size)
+        for (token in tf.keys) docFrequency[token] = (docFrequency[token] ?: 0) + 1
     }
 
     /** BM25 top-k. Returns an empty list when nothing in the pack matches. */
