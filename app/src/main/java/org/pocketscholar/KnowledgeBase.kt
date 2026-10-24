@@ -47,7 +47,7 @@ class KnowledgeBase(private val context: Context) {
         // The title is the strongest signal in a one-paragraph encyclopedia:
         // counting it three times keeps "Boston" out of a question about the
         // Great Depression.
-        val tokens = tokenize(title) * 3 + tokenize("$description $text").take(180)
+        val tokens = List(3) { tokenize(title) }.flatten() + tokenize("$description $text").take(180)
         if (tokens.isEmpty()) return
 
         val docId = docs.size

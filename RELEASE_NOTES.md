@@ -45,8 +45,9 @@ question → BM25 over 6,418 bundled articles → top-4 passages (900 chars each
         → answer with [1] [2] citations + the source list
 ```
 
-* llama.cpp `v0.7.0`, cross-compiled with the NDK, shipped as `libllama-cli.so`
-  and executed as a subprocess — no JNI layer to keep in sync with the C API.
+* llama.cpp `v0.7.0` `llama-completion`, cross-compiled with the NDK, shipped as
+  `libllama-completion.so` and executed as a subprocess — no JNI layer to keep in sync
+  with the C API.
 * Knowledge pack: Wikipedia Vital Articles levels 3–4, intro extracts, JSONL,
   indexed in memory at launch (inverted list, BM25 k1=1.2 b=0.75).
 * Model: Qwen2.5-1.5B-Instruct Q4_K_M in the recording; 0.5B–3B all fit.

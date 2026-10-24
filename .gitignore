@@ -1,7 +1,4 @@
-.gradle/
-build/
-app/build/
-app/src/main/jniLibs/
 local.properties
-*.gguf
-*.mp4
+app/build/
+.gradle/
+model.gguf
