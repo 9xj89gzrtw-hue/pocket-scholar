@@ -9,8 +9,9 @@ inside the APK.
 | asset | what it is |
 |---|---|
 | `app-debug.apk` | the app, `arm64-v8a` and `x86_64`, minSdk 26 |
-| `demo1.mp4`, `demo2.mp4` | screen recordings from a fresh emulator: install, model push, two questions |
-| `01-home.png` … `03-answer-rome.png` | stills from the same run |
+| `demo1.mp4`, `demo2.mp4`, `demo3.mp4` | screen recordings from a fresh emulator, one per question: Bronze Age collapse (explanation), photosynthesis vs cellular respiration (comparison), fall of Rome (reasoning) |
+| `01-home.png` … `04-answer-rome.png` | stills from the same run |
+| `logcat.txt` | the run's log: binary, ABI, model size, prompt length, measured chars/s |
 | `permissions.txt` | output of the check that `dumpsys package` lists no INTERNET permission |
 
 ## Install

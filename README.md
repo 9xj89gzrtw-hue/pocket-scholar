@@ -97,15 +97,20 @@ where one exists, and it says so when none does.
 
 * `AndroidManifest.xml` contains no `INTERNET` permission.
 * `adb shell dumpsys package org.pocketscholar | grep -i permission` is empty.
-* The CI workflow builds the APK, installs it on a fresh emulator, pushes a model, asks
-  questions, and records the screen — the artifacts are the demo.
+* The CI workflow builds the APK, installs it on a fresh emulator, asserts the missing
+  INTERNET permission, pushes a model, asks three questions and records the screen — the
+  artifacts are the demo. `logcat.txt` from the same run shows the binary, the ABI, the
+  model size and the measured characters per second.
+* The arm64-v8a `libllama-completion.so` from the released APK was also executed on an
+  `arm64-v8a` Android 13 emulator, i.e. the same binary a phone runs.
 
 ## Demo
 
-The two recorded runs, plus screenshots, are in the `v0.1.0` release. They were produced by
-`.github/workflows/android.yml` on a fresh API-33 emulator: install, push the model, ask a
-question, record the screen. Nothing is pre-baked — regenerating the demo means re-running
-the workflow.
+The three recorded runs — the Bronze Age collapse (explanation), photosynthesis vs cellular
+respiration (comparison) and the fall of Rome (reasoning) — plus screenshots, are in the
+`v0.1.0` release. They were produced by `.github/workflows/android.yml` on a fresh API-33
+emulator: install, push the model, ask a question, record the screen, stop the recording,
+pull it. Nothing is pre-baked — regenerating the demo means re-running the workflow.
 
 ## Licensing of bundled text
 

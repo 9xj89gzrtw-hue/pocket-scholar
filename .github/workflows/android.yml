@@ -101,7 +101,7 @@ jobs:
             sleep 30
             adb exec-out screencap -p > 01-home.png
             adb logcat -c
-            adb shell screenrecord --time-limit 300 --bit-rate 4000000 /sdcard/demo1.mp4 &
+            adb shell screenrecord --time-limit 180 --bit-rate 4000000 /sdcard/demo1.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "What+caused+the+collapse+of+the+Bronze+Age?" --ez autorun true
             for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
@@ -111,7 +111,7 @@ jobs:
             adb logcat -d -s PocketScholar:* >> demo-log.txt || true
             adb exec-out screencap -p > 02-answer-bronze.png
             adb logcat -c
-            adb shell screenrecord --time-limit 300 --bit-rate 4000000 /sdcard/demo2.mp4 &
+            adb shell screenrecord --time-limit 180 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "Compare+photosynthesis+and+cellular+respiration" --ez autorun true
             for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
@@ -121,7 +121,7 @@ jobs:
             adb logcat -d -s PocketScholar:* >> demo-log.txt || true
             adb exec-out screencap -p > 03-answer-photosynthesis.png
             adb logcat -c
-            adb shell screenrecord --time-limit 300 --bit-rate 4000000 /sdcard/demo3.mp4 &
+            adb shell screenrecord --time-limit 180 --bit-rate 4000000 /sdcard/demo3.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
             for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
