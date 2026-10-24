@@ -101,28 +101,37 @@ jobs:
             sleep 30
             adb exec-out screencap -p > 01-home.png
             adb logcat -c
-            adb shell screenrecord --time-limit 240 --bit-rate 4000000 /sdcard/demo1.mp4 &
+            adb shell screenrecord --time-limit 300 --bit-rate 4000000 /sdcard/demo1.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "What+caused+the+collapse+of+the+Bronze+Age?" --ez autorun true
             for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
+            adb shell pkill -INT screenrecord || true
+            sleep 4
             adb pull /sdcard/demo1.mp4 demo1.mp4 || true
+            adb logcat -d -s PocketScholar:* >> demo-log.txt || true
             adb exec-out screencap -p > 02-answer-bronze.png
             adb logcat -c
-            adb shell screenrecord --time-limit 240 --bit-rate 4000000 /sdcard/demo2.mp4 &
+            adb shell screenrecord --time-limit 300 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "Compare+photosynthesis+and+cellular+respiration" --ez autorun true
             for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
+            adb shell pkill -INT screenrecord || true
+            sleep 4
             adb pull /sdcard/demo2.mp4 demo2.mp4 || true
+            adb logcat -d -s PocketScholar:* >> demo-log.txt || true
             adb exec-out screencap -p > 03-answer-photosynthesis.png
             adb logcat -c
-            adb shell screenrecord --time-limit 240 --bit-rate 4000000 /sdcard/demo3.mp4 &
+            adb shell screenrecord --time-limit 300 --bit-rate 4000000 /sdcard/demo3.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
             for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
+            adb shell pkill -INT screenrecord || true
+            sleep 4
             adb pull /sdcard/demo3.mp4 demo3.mp4 || true
+            adb logcat -d -s PocketScholar:* >> demo-log.txt || true
             adb exec-out screencap -p > 04-answer-rome.png
-            adb logcat -d -s PocketScholar:* > logcat.txt || true
-            ls -lh *.png *.mp4 *.txt
+            cp demo-log.txt logcat.txt || true
+            ls -lh *.png *.mp4 *.txt || true
 
       - uses: actions/upload-artifact@v4
         if: always()
