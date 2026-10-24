@@ -30,8 +30,8 @@ question ──► BM25 over bundled articles ──► top-4 passages
   execute permission. No JNI layer to rot.
 * **Retrieval** — BM25 (k1 = 1.2, b = 0.75) built in memory at first launch over
   `app/src/main/assets/knowledge/pack.jsonl` (4,017 article summaries).
-* **Model** — any GGUF chat model. The demo uses Qwen2.5-0.5B-Instruct Q4_K_M (~400 MB);
-  1.5B–3B models fit comfortably in the 12 GB budget and give noticeably better answers.
+* **Model** — any GGUF chat model. The recorded demo uses Qwen2.5-1.5B-Instruct Q4_K_M (~1.0 GB);
+  0.5B is the fast floor, 3B still fits comfortably inside the 12 GB budget.
 
 ## Build
 
@@ -52,7 +52,7 @@ gradle assembleDebug     # or ./gradlew if you generate a wrapper
 
 # 3. install and give it a model
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb push Qwen2.5-0.5B-Instruct-Q4_K_M.gguf \
+adb push Qwen2.5-1.5B-Instruct-Q4_K_M.gguf \
   /sdcard/Android/data/org.pocketscholar/files/model.gguf
 ```
 
@@ -63,8 +63,8 @@ app. Models are never downloaded by the app.
 
 | model | size | notes |
 |---|---|---|
-| Qwen2.5-0.5B-Instruct Q4_K_M | 0.4 GB | demo default, fastest |
-| Qwen2.5-1.5B-Instruct Q4_K_M | 1.0 GB | recommended balance |
+| Qwen2.5-0.5B-Instruct Q4_K_M | 0.4 GB | fastest, weakest answers |
+| Qwen2.5-1.5B-Instruct Q4_K_M | 1.0 GB | the recorded demo |
 | Qwen2.5-3B-Instruct Q4_K_M | 1.9 GB | best quality that stays interactive on CPU |
 
 ## Knowledge pack
