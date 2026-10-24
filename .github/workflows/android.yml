@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: model.gguf
-          key: qwen2.5-0.5b-instruct-q4_k_m
+          key: qwen2.5-0.5b-instruct-q4_k_m-v1
 
       - name: Fetch model
         run: |
@@ -72,45 +72,57 @@ jobs:
             "https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf"
           ls -lh model.gguf
 
+      - name: Check KVM
+        run: |
+          ls -l /dev/kvm || echo "NO /dev/kvm"
+          sudo chmod 666 /dev/kvm || true
+
       - name: Install and record the demo
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 33
           target: google_apis
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_5
           disable-animations: true
-          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none -cores 4
+          disable-linux-hw-accel: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none -cores 4 -no-snapshot
           script: |
             set -euxo pipefail
             adb install -r app-debug.apk
+
+            # Evidence that the app cannot reach the network: no INTERNET permission.
+            adb shell dumpsys package org.pocketscholar > dumpsys.txt
+            if grep -q "android.permission.INTERNET" dumpsys.txt; then
+              echo "INTERNET permission present -- FAIL"; exit 1
+            fi
+            echo "no INTERNET permission" > permissions.txt
+
             adb shell "mkdir -p /sdcard/Android/data/org.pocketscholar/files"
             adb push model.gguf /sdcard/Android/data/org.pocketscholar/files/model.gguf
             adb shell am start -n org.pocketscholar/.MainActivity
-            sleep 15
+            sleep 25
             adb exec-out screencap -p > 01-home.png
 
-            adb shell screenrecord --time-limit 150 /sdcard/demo1.mp4 &
+            adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo1.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity \
-              --es query "Explain why the 1929 crash spread beyond the United States" --ez autorun true
-            sleep 135
+              --es query "Why did the Great Depression spread beyond the United States?" --ez autorun true
+            sleep 120
             adb pull /sdcard/demo1.mp4 demo1.mp4 || true
-            adb exec-out screencap -p > 02-answer-1929.png
+            adb exec-out screencap -p > 02-answer-depression.png
 
-            adb shell screenrecord --time-limit 150 /sdcard/demo2.mp4 &
+            adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity \
-              --es query "Compare photosynthesis and cellular respiration" --ez autorun true
-            sleep 135
+              --es query "Why did the Roman Empire fall?" --ez autorun true
+            sleep 120
             adb pull /sdcard/demo2.mp4 demo2.mp4 || true
-            adb exec-out screencap -p > 03-answer-photosynthesis.png
+            adb exec-out screencap -p > 03-answer-rome.png
 
-            adb shell am start -n org.pocketscholar/.MainActivity \
-              --es query "How does mRNA differ from a conventional vaccine?" --ez autorun true
-            sleep 90
-            adb exec-out screencap -p > 04-answer-mrna.png
-            ls -lh *.png *.mp4
+            adb logcat -d -s PocketScholar:* llama-cli:* > logcat.txt || true
+            ls -lh *.png *.mp4 *.txt
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -119,3 +131,5 @@ jobs:
           path: |
             *.png
             *.mp4
+            permissions.txt
+            logcat.txt

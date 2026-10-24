@@ -37,9 +37,9 @@ class MainActivity : Activity() {
     private var pendingQuery: String? = null
 
     private val samples = listOf(
-        "Explain why the 1929 crash spread beyond the United States",
+        "Why did the Great Depression spread beyond the United States?",
         "Compare photosynthesis and cellular respiration",
-        "How does mRNA differ from a conventional vaccine?"
+        "Why did the Roman Empire fall?"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {

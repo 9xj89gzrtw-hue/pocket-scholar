@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Build the offline knowledge pack bundled with Pocket Scholar.
 
-Source: Wikipedia pageview top-1000 lists for the last 12 months (what people
-actually look up), then intro extracts in batches of 50.
+Source: Wikipedia's own "vital articles" curriculum — Level 3 (1,000 core
+articles) plus Level 4 (10,000, split by topic). These are the articles
+Wikipedia editors consider essential, which is exactly the shape a research
+assistant needs: science, history, geography, technology, philosophy.
 
 Output: one JSON object per line, each with "title", "description", "extract".
 
@@ -16,19 +18,18 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-MONTHS = [(2025, 10), (2025, 11), (2025, 12)] + [(2026, m) for m in range(1, 10)]
-SKIP = re.compile(r"^(Main_Page|Special:|Wikipedia:|Portal:|File:|Help:|Category:|"
-                  r"Template:|Talk:|Draft:|Module:|MediaWiki:|Deaths_in_)", re.I)
+API = "https://en.wikipedia.org/w/api.php"
 UA = {"User-Agent": "PocketScholarBot/1.0 "
                     "(https://github.com/9xj89gzrtw-hue/pocket-scholar; "
                     "9xj89gzrtw-hue@users.noreply.github.com)"}
+SKIP = re.compile(r"^(List of|Lists of|Timeline of|Index of|Outline of)", re.I)
 
 
 def get_json(url: str, attempts: int = 6):
     for attempt in range(attempts):
         try:
             request = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(request, timeout=40) as response:
+            with urllib.request.urlopen(request, timeout=45) as response:
                 return json.loads(response.read())
         except urllib.error.HTTPError as exc:
             if exc.code != 429 or attempt == attempts - 1:
@@ -39,24 +40,35 @@ def get_json(url: str, attempts: int = 6):
     raise RuntimeError("unreachable")
 
 
-def top_titles() -> list[str]:
-    seen, out = set(), []
-    for year, month in MONTHS:
-        url = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/top/"
-               f"en.wikipedia/all-access/{year}/{month:02d}/all-days")
+def api(params: dict):
+    return get_json(API + "?" + urllib.parse.urlencode(params))
+
+
+def page_articles(page: str) -> list[str]:
+    data = api({"action": "parse", "page": page, "prop": "links",
+                "format": "json", "formatversion": "2"})
+    return [link["title"] for link in data["parse"]["links"] if link.get("ns") == 0]
+
+
+def vital_titles() -> list[str]:
+    titles: dict[str, None] = {}
+    for title in page_articles("Wikipedia:Vital articles/Level 3"):
+        if not SKIP.match(title):
+            titles[title] = None
+    index = api({"action": "parse", "page": "Wikipedia:Vital articles/Level 4",
+                 "prop": "links", "format": "json", "formatversion": "2"})
+    subpages = [link["title"] for link in index["parse"]["links"]
+                if link["title"].startswith("Wikipedia:Vital articles/Level 4/")]
+    for subpage in subpages:
+        time.sleep(0.7)
         try:
-            for article in get_json(url)["items"][0]["articles"]:
-                title = article["article"].replace("_", " ")
-                if SKIP.match(article["article"]) or title in seen:
-                    continue
-                if title.endswith(".xxx") or len(title) < 2:
-                    continue
-                seen.add(title)
-                out.append(title)
+            for title in page_articles(subpage):
+                if not SKIP.match(title):
+                    titles[title] = None
+            print(f"{subpage.split('/')[-1]}: {len(titles)} total", file=sys.stderr)
         except Exception as exc:
-            print(f"skip {year}-{month:02d}: {exc}", file=sys.stderr)
-        time.sleep(0.5)
-    return out
+            print(f"skip {subpage}: {exc}", file=sys.stderr)
+    return list(titles)
 
 
 def summaries(titles: list[str]):
@@ -68,7 +80,7 @@ def summaries(titles: list[str]):
             "titles": "|".join(batch),
         })
         try:
-            data = get_json("https://en.wikipedia.org/w/api.php?" + params)
+            data = get_json(f"{API}?{params}")
         except Exception as exc:
             print(f"batch {start}: giving up: {exc}", file=sys.stderr)
             time.sleep(10)
@@ -76,6 +88,9 @@ def summaries(titles: list[str]):
         for page in data.get("query", {}).get("pages", []):
             extract = (page.get("extract") or "").strip()
             if page.get("missing") or len(extract) < 80:
+                continue
+            # disambiguation pages are noise in a research corpus
+            if extract.lower().startswith("may refer to") or "can refer to" in extract[:120].lower():
                 continue
             yield {"title": page.get("title", ""),
                    "description": "",
@@ -85,7 +100,7 @@ def summaries(titles: list[str]):
 
 def main() -> None:
     out_path = sys.argv[1] if len(sys.argv) > 1 else None
-    titles = top_titles()
+    titles = vital_titles()
     print(f"titles: {len(titles)}", file=sys.stderr)
     stream = open(out_path, "w", encoding="utf-8") if out_path else sys.stdout
     written = 0

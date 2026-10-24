@@ -8,17 +8,16 @@ import kotlin.math.ln
  * Offline BM25 index over the bundled knowledge pack.
  *
  * The pack is one JSON object per line: {"title", "description", "extract"}.
- * Everything is built in memory at startup; there is no database, no network,
- * and no dependency outside the Android framework.
+ * The index is an inverted list of (docId, termFrequency) pairs, built in memory
+ * at launch. No database, no network, no dependencies outside the framework.
  */
 class KnowledgeBase(private val context: Context) {
 
     data class Doc(val title: String, val text: String, val description: String)
 
     private val docs = ArrayList<Doc>()
-    private val termFreqs = ArrayList<HashMap<String, Int>>()
     private val lengths = ArrayList<Int>()
-    private val docFrequency = HashMap<String, Int>()
+    private val postings = HashMap<String, ArrayList<Int>>()
     private var averageLength = 1.0
 
     fun size(): Int = docs.size
@@ -45,35 +44,48 @@ class KnowledgeBase(private val context: Context) {
         val text = json.optString("extract")
         if (title.isBlank() || text.isBlank()) return
         val description = json.optString("description")
-        val tokens = tokenize("$title $description $text").take(220)
+        val tokens = tokenize("$title $description $text").take(180)
         if (tokens.isEmpty()) return
+
+        val docId = docs.size
         docs.add(Doc(title, text, description))
-        val tf = HashMap<String, Int>()
-        for (token in tokens) tf[token] = (tf[token] ?: 0) + 1
-        termFreqs.add(tf)
         lengths.add(tokens.size)
-        for (token in tf.keys) docFrequency[token] = (docFrequency[token] ?: 0) + 1
+
+        val frequencies = HashMap<String, Int>()
+        for (token in tokens) frequencies[token] = (frequencies[token] ?: 0) + 1
+        for ((token, frequency) in frequencies) {
+            val list = postings.getOrPut(token) { ArrayList() }
+            list.add(docId)
+            list.add(frequency)
+        }
     }
 
     /** BM25 top-k. Returns an empty list when nothing in the pack matches. */
     fun search(query: String, k: Int = 4): List<Doc> {
         val terms = tokenize(query).distinct()
         if (terms.isEmpty() || docs.isEmpty()) return emptyList()
-        val scored = ArrayList<Pair<Int, Double>>()
-        for (index in docs.indices) {
-            var score = 0.0
-            val tf = termFreqs[index]
-            val length = lengths[index]
-            for (term in terms) {
-                val frequency = tf[term] ?: continue
-                val df = docFrequency[term] ?: continue
-                val idf = ln(1.0 + (docs.size - df + 0.5) / (df + 0.5))
-                val denominator = frequency + 1.2 * (1 - 0.75 + 0.75 * length / averageLength)
-                score += idf * frequency * 2.2 / denominator
+        val total = docs.size
+        val scores = HashMap<Int, Double>()
+
+        for (term in terms) {
+            val list = postings[term] ?: continue
+            val documentFrequency = list.size / 2
+            val idf = ln(1.0 + (total - documentFrequency + 0.5) / (documentFrequency + 0.5))
+            var index = 0
+            while (index < list.size) {
+                val docId = list[index]
+                val frequency = list[index + 1]
+                val denominator = frequency + 1.2 * (1 - 0.75 + 0.75 * lengths[docId] / averageLength)
+                val contribution = idf * frequency * 2.2 / denominator
+                scores[docId] = (scores[docId] ?: 0.0) + contribution
+                index += 2
             }
-            if (score > 0.0) scored.add(index to score)
         }
-        return scored.sortedByDescending { it.second }.take(k).map { docs[it.first] }
+        if (scores.isEmpty()) return emptyList()
+        return scores.entries
+            .sortedByDescending { it.value }
+            .take(k)
+            .map { docs[it.key] }
     }
 
     private fun tokenize(text: String): List<String> =
