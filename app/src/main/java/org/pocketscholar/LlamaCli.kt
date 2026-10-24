@@ -44,7 +44,7 @@ object LlamaCli {
             "--temp", "0.25",
             "--top-p", "0.9",
             "--no-display-prompt",
-            "-no-cnv"
+            "--no-conversation"
         )
         val process = ProcessBuilder(command)
             .redirectErrorStream(false)

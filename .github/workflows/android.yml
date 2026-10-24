@@ -102,13 +102,13 @@ jobs:
             adb exec-out screencap -p > 01-home.png
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo1.mp4 &
             sleep 2
-            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why did the Great Depression spread beyond the United States?" --ez autorun true
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Great+Depression+spread+beyond+the+United+States?" --ez autorun true
             sleep 120
             adb pull /sdcard/demo1.mp4 demo1.mp4 || true
             adb exec-out screencap -p > 02-answer-depression.png
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
-            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why did the Roman Empire fall?" --ez autorun true
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
             sleep 120
             adb pull /sdcard/demo2.mp4 demo2.mp4 || true
             adb exec-out screencap -p > 03-answer-rome.png

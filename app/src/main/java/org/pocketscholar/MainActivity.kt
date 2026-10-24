@@ -58,7 +58,7 @@ class MainActivity : Activity() {
         }
 
         if (intent?.getBooleanExtra("autorun", false) == true) {
-            val question = intent.getStringExtra("query")
+            val question = intent.queryExtra()
             if (!question.isNullOrBlank()) {
                 input.setText(question)
                 pendingQuery = question
@@ -68,11 +68,15 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        val question = intent?.getStringExtra("query") ?: return
+        val question = intent?.queryExtra() ?: return
         input.setText(question)
         pendingQuery = question
         maybeRunPending()
     }
+
+    /** `adb shell am start` splits on spaces, so CI passes "why+did+..." instead. */
+    private fun Intent.queryExtra(): String? =
+        getStringExtra("query")?.replace('+', ' ')
 
     /** Autorun from CI: wait until both the corpus and a model are ready. */
     private fun maybeRunPending() {
