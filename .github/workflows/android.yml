@@ -108,11 +108,17 @@ jobs:
             adb exec-out screencap -p > 02-answer-bronze.png
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
-            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Compare+photosynthesis+and+cellular+respiration" --ez autorun true
             sleep 120
             adb pull /sdcard/demo2.mp4 demo2.mp4 || true
-            adb exec-out screencap -p > 03-answer-rome.png
-            adb logcat -d -s PocketScholar:* llama-cli:* > logcat.txt || true
+            adb exec-out screencap -p > 03-answer-photosynthesis.png
+            adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo3.mp4 &
+            sleep 2
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
+            sleep 120
+            adb pull /sdcard/demo3.mp4 demo3.mp4 || true
+            adb exec-out screencap -p > 04-answer-rome.png
+            adb logcat -d -s PocketScholar:* > logcat.txt || true
             ls -lh *.png *.mp4 *.txt
 
       - uses: actions/upload-artifact@v4

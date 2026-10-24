@@ -1,6 +1,8 @@
 package org.pocketscholar
 
 import android.content.Context
+import android.os.Build
+import android.util.Log
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -13,6 +15,8 @@ import java.util.concurrent.TimeUnit
  * as `libllama-completion.so` so Android extracts it with execute permission.
  */
 object LlamaCli {
+
+    private const val TAG = "PocketScholar"
 
     fun binary(context: Context): File =
         File(context.applicationInfo.nativeLibraryDir, "libllama-completion.so")
@@ -46,6 +50,9 @@ object LlamaCli {
             "--no-display-prompt",
             "--no-conversation"
         )
+        Log.i(TAG, "exec ${binary.name} on ${Build.SUPPORTED_ABIS.joinToString(",")} " +
+            "model=${model.length() / 1024 / 1024} MB threads=$threads prompt=${prompt.length} chars")
+        val started = System.currentTimeMillis()
         val process = ProcessBuilder(command)
             .redirectErrorStream(false)
             .apply {
@@ -76,7 +83,11 @@ object LlamaCli {
         if (process.exitValue() != 0) {
             error("llama-completion exited ${process.exitValue()}: ${stderr.takeLast(600)}")
         }
-        return clean(stdout.toString())
+        val text = clean(stdout.toString())
+        val elapsed = System.currentTimeMillis() - started
+        Log.i(TAG, "answered ${text.length} chars in ${elapsed / 1000.0} s " +
+            "(${if (elapsed > 0) text.length * 1000L / elapsed else 0} chars/s)")
+        return text
     }
 
     /** llama.cpp writes "[end of text]"-style markers and can trail off mid-sentence. */
