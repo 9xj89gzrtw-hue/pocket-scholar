@@ -48,7 +48,7 @@ mkdir -p app/src/main/jniLibs/arm64-v8a
 cp llama.cpp/build-android/bin/llama-cli app/src/main/jniLibs/arm64-v8a/libllama-cli.so
 
 # 2. build the APK
-gradle assembleDebug     # or ./gradlew if you generate a wrapper
+./gradlew assembleDebug
 
 # 3. install and give it a model
 adb install -r app/build/outputs/apk/debug/app-debug.apk

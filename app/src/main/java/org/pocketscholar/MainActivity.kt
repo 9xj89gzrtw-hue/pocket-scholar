@@ -244,7 +244,7 @@ class MainActivity : Activity() {
             "that you are less certain. Be concrete, compare things explicitly, and prefer short " +
             "examples over generalities. Never invent citations."
         val context = passages.mapIndexed { index, doc ->
-            "[${index + 1}] ${doc.title}: " + doc.text.replace("\n", " ").take(650)
+            "[${index + 1}] ${doc.title}: " + doc.text.replace("\n", " ").take(900)
         }.joinToString("\n\n")
         return buildString {
             append("<|im_start|>system\n").append(system).append("<|im_end|>\n")
