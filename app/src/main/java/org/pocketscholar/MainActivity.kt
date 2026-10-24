@@ -36,6 +36,7 @@ class MainActivity : Activity() {
     private var busy = false
     private var pendingQuery: String? = null
     private lateinit var scroll: ScrollView
+    private lateinit var samplesBlock: LinearLayout
 
     private val samples = listOf(
         "What caused the collapse of the Bronze Age?",
@@ -149,20 +150,22 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         column.addView(buttons)
 
-        column.addView(TextView(this).apply {
+        samplesBlock = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        samplesBlock.addView(TextView(this).apply {
             text = "Try one of these:"
             textSize = 12f
             setTextColor(Color.parseColor("#888888"))
             setPadding(0, dp(4), 0, dp(2))
         })
         for (sample in samples) {
-            column.addView(Button(this).apply {
+            samplesBlock.addView(Button(this).apply {
                 text = sample
                 textSize = 12f
                 isAllCaps = false
                 setOnClickListener { input.setText(sample); ask() }
             })
         }
+        column.addView(samplesBlock)
 
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             isIndeterminate = true
@@ -238,7 +241,9 @@ class MainActivity : Activity() {
                     else
                         "Sources: " + passages.mapIndexed { i, d -> "[${i + 1}] ${d.title}" }.joinToString(" · ") +
                             "   (${String.format("%.1f s", seconds)})"
-                    // the answer plus its sources should be on screen together
+                    // the question, the answer and its sources should share the screen:
+                    // the sample buttons have done their job by now
+                    samplesBlock.visibility = View.GONE
                     scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
                 }
             } catch (error: Exception) {
