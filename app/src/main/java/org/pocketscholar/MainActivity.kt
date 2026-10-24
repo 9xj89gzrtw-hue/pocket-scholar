@@ -35,6 +35,7 @@ class MainActivity : Activity() {
     private var corpusLoaded = false
     private var busy = false
     private var pendingQuery: String? = null
+    private lateinit var scroll: ScrollView
 
     private val samples = listOf(
         "What caused the collapse of the Bronze Age?",
@@ -186,7 +187,10 @@ class MainActivity : Activity() {
         }
         column.addView(sources)
 
-        return ScrollView(this).apply { addView(column) }
+        return ScrollView(this).apply {
+            scroll = this
+            addView(column)
+        }
     }
 
     private fun refreshStatus() {
@@ -234,6 +238,8 @@ class MainActivity : Activity() {
                     else
                         "Sources: " + passages.mapIndexed { i, d -> "[${i + 1}] ${d.title}" }.joinToString(" · ") +
                             "   (${String.format("%.1f s", seconds)})"
+                    // the answer plus its sources should be on screen together
+                    scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
                 }
             } catch (error: Exception) {
                 runOnUiThread { answer.text = "Error: ${error.message}" }
