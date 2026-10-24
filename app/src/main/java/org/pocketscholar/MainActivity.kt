@@ -37,7 +37,7 @@ class MainActivity : Activity() {
     private var pendingQuery: String? = null
 
     private val samples = listOf(
-        "Why did the Great Depression spread beyond the United States?",
+        "What caused the collapse of the Bronze Age?",
         "Compare photosynthesis and cellular respiration",
         "Why did the Roman Empire fall?"
     )
@@ -242,11 +242,11 @@ class MainActivity : Activity() {
     }
 
     private fun buildPrompt(question: String, passages: List<KnowledgeBase.Doc>): String {
-        val system = "You are Pocket Scholar, a research assistant running entirely offline on " +
-            "an Android phone. Use the reference passages when they help and cite them as [1], [2]. " +
-            "When the passages do not cover the question, answer from your own knowledge and say " +
-            "that you are less certain. Be concrete, compare things explicitly, and prefer short " +
-            "examples over generalities. Never invent citations."
+        val system = "You are Pocket Scholar, an offline research assistant on an Android phone. " +
+            "Answer from the reference passages and name the passage each point comes from, as [1]. " +
+            "Start with a one-sentence answer, then give two or three concrete details. If the " +
+            "passages do not cover the question, say so and mark anything you add from your own " +
+            "knowledge. Never invent a citation."
         val context = passages.mapIndexed { index, doc ->
             "[${index + 1}] ${doc.title}: " + doc.text.replace("\n", " ").take(900)
         }.joinToString("\n\n")
@@ -254,8 +254,8 @@ class MainActivity : Activity() {
             append("<|im_start|>system\n").append(system).append("<|im_end|>\n")
             append("<|im_start|>user\n")
             if (context.isNotEmpty()) append("Reference passages:\n").append(context).append("\n\n")
-            append(question)
-            append("\n\nAnswer in at most 200 words.<|im_end|>\n")
+            append("Question: ").append(question)
+            append("\n\nAnswer in at most 150 words.<|im_end|>\n")
             append("<|im_start|>assistant\n")
         }
     }

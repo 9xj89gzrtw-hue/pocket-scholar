@@ -44,7 +44,10 @@ class KnowledgeBase(private val context: Context) {
         val text = json.optString("extract")
         if (title.isBlank() || text.isBlank()) return
         val description = json.optString("description")
-        val tokens = tokenize("$title $description $text").take(180)
+        // The title is the strongest signal in a one-paragraph encyclopedia:
+        // counting it three times keeps "Boston" out of a question about the
+        // Great Depression.
+        val tokens = tokenize(title) * 3 + tokenize("$description $text").take(180)
         if (tokens.isEmpty()) return
 
         val docId = docs.size

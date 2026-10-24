@@ -5,17 +5,17 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
- * Runs the bundled llama.cpp CLI as a subprocess.
+ * Runs the bundled llama.cpp completion binary as a subprocess.
  *
  * Why a process instead of JNI: the same binary can be built for every Android
  * ABI by llama.cpp's own CMake, it cannot crash the UI thread, and the app has
  * no native glue to keep in sync with llama.cpp's C API. The binary is shipped
- * as `libllama-cli.so` so Android extracts it with execute permission.
+ * as `libllama-completion.so` so Android extracts it with execute permission.
  */
 object LlamaCli {
 
     fun binary(context: Context): File =
-        File(context.applicationInfo.nativeLibraryDir, "libllama-cli.so")
+        File(context.applicationInfo.nativeLibraryDir, "libllama-completion.so")
 
     /** Model search order: internal files dir, then app-specific external dir. */
     fun model(context: Context): File? = sequenceOf(
@@ -26,7 +26,7 @@ object LlamaCli {
     fun generate(
         context: Context,
         prompt: String,
-        maxTokens: Int = 220,
+        maxTokens: Int = 320,
         threads: Int = Runtime.getRuntime().availableProcessors().coerceIn(2, 6),
         timeoutSeconds: Long = 300
     ): String {
@@ -41,7 +41,7 @@ object LlamaCli {
             "-n", maxTokens.toString(),
             "-c", "4096",
             "-t", threads.toString(),
-            "--temp", "0.25",
+            "--temp", "0.2",
             "--top-p", "0.9",
             "--no-display-prompt",
             "--no-conversation"
@@ -74,8 +74,17 @@ object LlamaCli {
         reader.join(5_000); errorReader.join(5_000)
 
         if (process.exitValue() != 0) {
-            error("llama-cli exited ${process.exitValue()}: ${stderr.takeLast(600)}")
+            error("llama-completion exited ${process.exitValue()}: ${stderr.takeLast(600)}")
         }
-        return stdout.toString().trim()
+        return clean(stdout.toString())
+    }
+
+    /** llama.cpp writes "[end of text]"-style markers and can trail off mid-sentence. */
+    private fun clean(raw: String): String {
+        var text = raw
+        for (marker in listOf("<|im_end|>", "<|endoftext|>", "[end of text]", "<|im_start|>")) {
+            text = text.substringBefore(marker)
+        }
+        return text.trim()
     }
 }

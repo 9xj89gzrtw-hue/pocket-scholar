@@ -35,10 +35,10 @@ jobs:
               -DLLAMA_CURL=OFF \
               -DGGML_OPENMP=OFF \
               -DCMAKE_BUILD_TYPE=Release
-            cmake --build "/tmp/llama/build-$abi" --target llama-cli -j"$(nproc)"
+            cmake --build "/tmp/llama/build-$abi" --target llama-completion -j"$(nproc)"
             mkdir -p "app/src/main/jniLibs/$abi"
-            cp "/tmp/llama/build-$abi/bin/llama-cli" "app/src/main/jniLibs/$abi/libllama-cli.so"
-            file "app/src/main/jniLibs/$abi/libllama-cli.so"
+            cp "/tmp/llama/build-$abi/bin/llama-completion" "app/src/main/jniLibs/$abi/libllama-completion.so"
+            file "app/src/main/jniLibs/$abi/libllama-completion.so"
           done
 
       - name: Assemble APK
@@ -102,10 +102,10 @@ jobs:
             adb exec-out screencap -p > 01-home.png
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo1.mp4 &
             sleep 2
-            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Great+Depression+spread+beyond+the+United+States?" --ez autorun true
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "What+caused+the+collapse+of+the+Bronze+Age?" --ez autorun true
             sleep 120
             adb pull /sdcard/demo1.mp4 demo1.mp4 || true
-            adb exec-out screencap -p > 02-answer-depression.png
+            adb exec-out screencap -p > 02-answer-bronze.png
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
             adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
