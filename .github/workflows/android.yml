@@ -91,38 +91,27 @@ jobs:
           emulator-boot-timeout: 900
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none -no-snapshot
           script: |
-            set -eux
             adb install -r app-debug.apk
-
-            # Evidence that the app cannot reach the network: no INTERNET permission.
             adb shell dumpsys package org.pocketscholar > dumpsys.txt
-            if grep -q "android.permission.INTERNET" dumpsys.txt; then
-              echo "INTERNET permission present -- FAIL"; exit 1
-            fi
+            test "$(grep -c 'android.permission.INTERNET' dumpsys.txt)" -eq 0
             echo "no INTERNET permission" > permissions.txt
-
-            adb shell "mkdir -p /sdcard/Android/data/org.pocketscholar/files"
+            adb shell mkdir -p /sdcard/Android/data/org.pocketscholar/files
             adb push model.gguf /sdcard/Android/data/org.pocketscholar/files/model.gguf
             adb shell am start -n org.pocketscholar/.MainActivity
-            sleep 25
+            sleep 30
             adb exec-out screencap -p > 01-home.png
-
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo1.mp4 &
             sleep 2
-            adb shell am start -n org.pocketscholar/.MainActivity \
-              --es query "Why did the Great Depression spread beyond the United States?" --ez autorun true
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why did the Great Depression spread beyond the United States?" --ez autorun true
             sleep 120
             adb pull /sdcard/demo1.mp4 demo1.mp4 || true
             adb exec-out screencap -p > 02-answer-depression.png
-
             adb shell screenrecord --time-limit 130 --bit-rate 4000000 /sdcard/demo2.mp4 &
             sleep 2
-            adb shell am start -n org.pocketscholar/.MainActivity \
-              --es query "Why did the Roman Empire fall?" --ez autorun true
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why did the Roman Empire fall?" --ez autorun true
             sleep 120
             adb pull /sdcard/demo2.mp4 demo2.mp4 || true
             adb exec-out screencap -p > 03-answer-rome.png
-
             adb logcat -d -s PocketScholar:* llama-cli:* > logcat.txt || true
             ls -lh *.png *.mp4 *.txt
 
