@@ -96,6 +96,15 @@ object LlamaCli {
         for (marker in listOf("<|im_end|>", "<|endoftext|>", "[end of text]", "<|im_start|>")) {
             text = text.substringBefore(marker)
         }
-        return text.trim()
+        text = text.trim()
+        // The token budget stops generation wherever it runs out, so an answer can end in
+        // the middle of a sentence. Cut back to the last full sentence instead of showing
+        // "... but their cultural traditions".
+        val finished = Regex("""[.!?]["')\]]*(?:\s*\[\d+])*\s*$""")
+        if (text.isNotEmpty() && !finished.containsMatchIn(text)) {
+            val cut = maxOf(text.lastIndexOf('.'), text.lastIndexOf('!'), text.lastIndexOf('?'))
+            if (cut > text.length / 3) text = text.substring(0, cut + 1).trim()
+        }
+        return text
     }
 }

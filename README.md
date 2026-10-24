@@ -88,6 +88,10 @@ The model is asked to name the passage behind each point (`[1]`, `[2]`); a 1.5B 
 that most of the time, not always, so the app also prints the sources it actually retrieved —
 that list, not the model's good manners, is what you can check.
 
+The answer budget is 160 tokens (roughly 90 words), which is what keeps a reply under
+two minutes on a CPU-only phone; if generation stops mid-sentence the app shows only the
+whole sentences it got to.
+
 It is not a frontier model. A 3B model with 200 million facts missing will lose to the
 internet on long-tail questions; the honest claim is that it is dramatically better than a
 bare 1B model of the same size, because the answer has to come from a retrieved passage
