@@ -74,6 +74,12 @@ class MainActivity : Activity() {
         maybeRunPending()
     }
 
+    /*
+     * A second `am start` can arrive while the previous question is still being
+     * answered (the CI demo fires one every few minutes). The pending question is
+     * kept and started as soon as the worker is free, instead of being dropped.
+     */
+
     /** `adb shell am start` splits on spaces, so CI passes "why+did+..." instead. */
     private fun Intent.queryExtra(): String? =
         getStringExtra("query")?.replace('+', ' ')
@@ -236,6 +242,7 @@ class MainActivity : Activity() {
                     busy = false
                     askButton.isEnabled = true
                     progress.visibility = View.GONE
+                    maybeRunPending()
                 }
             }
         }
