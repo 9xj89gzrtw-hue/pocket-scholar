@@ -112,7 +112,10 @@ where one exists, and it says so when none does.
 
 The three recorded runs — the Bronze Age collapse (explanation), photosynthesis vs cellular
 respiration (comparison) and the fall of Rome (reasoning) — plus screenshots, are in the
-`v0.1.0` release. They were produced by `.github/workflows/android.yml` on a fresh API-33
+[`v0.1.0` release](https://github.com/9xj89gzrtw-hue/pocket-scholar/releases/tag/v0.1.0) and
+in [`demo/`](demo/): `demo1.mp4` Bronze Age (85.9 s), `demo2.mp4` photosynthesis vs
+respiration (82.1 s), `demo3.mp4` fall of Rome (80.1 s), recorded on a CPU-only API-33
+emulator with Qwen2.5-1.5B. They were produced by `.github/workflows/android.yml` on a fresh API-33
 emulator: install, push the model, ask a question, record the screen, stop the recording,
 pull it. Nothing is pre-baked — regenerating the demo means re-running the workflow.
 

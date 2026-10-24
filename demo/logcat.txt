@@ -1,0 +1,9 @@
+--------- beginning of main
+10-24 22:20:47.436  4160  4208 I PocketScholar: exec libllama-completion.so on x86_64 model=940 MB threads=4 prompt=3922 chars
+10-24 22:22:13.374  4160  4208 I PocketScholar: answered 739 chars in 85.938 s (8 chars/s)
+--------- beginning of main
+10-24 22:22:34.123  4160  4208 I PocketScholar: exec libllama-completion.so on x86_64 model=940 MB threads=4 prompt=3931 chars
+10-24 22:23:56.270  4160  4208 I PocketScholar: answered 809 chars in 82.147 s (9 chars/s)
+--------- beginning of main
+10-24 22:24:20.658  4160  4208 I PocketScholar: exec libllama-completion.so on x86_64 model=940 MB threads=4 prompt=3946 chars
+10-24 22:25:40.720  4160  4208 I PocketScholar: answered 622 chars in 80.062 s (7 chars/s)
