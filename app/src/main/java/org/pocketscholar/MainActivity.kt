@@ -252,17 +252,18 @@ class MainActivity : Activity() {
         val system = "You are Pocket Scholar, an offline research assistant on an Android phone. " +
             "Answer from the reference passages and name the passage each point comes from, as [1]. " +
             "Start with a one-sentence answer, then give two or three concrete details. If the " +
-            "passages do not cover the question, say so and mark anything you add from your own " +
-            "knowledge. Never invent a citation."
+            "question compares two things, say explicitly what each one does that the other does " +
+            "not. If the passages do not cover the question, say so and mark anything you add from " +
+            "your own knowledge. Never invent a citation."
         val context = passages.mapIndexed { index, doc ->
-            "[${index + 1}] ${doc.title}: " + doc.text.replace("\n", " ").take(900)
+            "[${index + 1}] ${doc.title}: " + doc.text.replace("\n", " ").take(800)
         }.joinToString("\n\n")
         return buildString {
             append("<|im_start|>system\n").append(system).append("<|im_end|>\n")
             append("<|im_start|>user\n")
             if (context.isNotEmpty()) append("Reference passages:\n").append(context).append("\n\n")
             append("Question: ").append(question)
-            append("\n\nAnswer in at most 150 words.<|im_end|>\n")
+            append("\n\nAnswer in at most 90 words.<|im_end|>\n")
             append("<|im_start|>assistant\n")
         }
     }

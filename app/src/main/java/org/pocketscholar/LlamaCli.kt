@@ -30,7 +30,7 @@ object LlamaCli {
     fun generate(
         context: Context,
         prompt: String,
-        maxTokens: Int = 240,
+        maxTokens: Int = 160,
         threads: Int = Runtime.getRuntime().availableProcessors().coerceIn(2, 6),
         timeoutSeconds: Long = 300
     ): String {
