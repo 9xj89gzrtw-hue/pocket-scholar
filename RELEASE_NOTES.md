@@ -52,3 +52,19 @@ question → BM25 over 6,418 bundled articles → top-4 passages (900 chars each
 * Knowledge pack: Wikipedia Vital Articles levels 3–4, intro extracts, JSONL,
   indexed in memory at launch (inverted list, BM25 k1=1.2 b=0.75).
 * Model: Qwen2.5-1.5B-Instruct Q4_K_M in the recording; 0.5B–3B all fit.
+
+## Addendum — the same three questions on the 0.5B weights
+
+`small-model.yml` re-runs the whole demo pipeline with Qwen2.5-0.5B (398 MB) instead of
+1.5B, same APK, same questions, same retrieved passages. Assets: `small1.mp4` … `small3.mp4`,
+`small-01-home.png` … `small-04-answer-rome.png`, `small-model-logcat.txt`.
+
+| question | 0.5B | 1.5B |
+|---|---|---|
+| Bronze Age collapse | 41.8 s, 510 chars — restates the question, never names a cause | 85.9 s, 739 chars — Mycenaean palace economy, Hittites, Phoenicians, Greek Dark Ages |
+| photosynthesis vs respiration | 41.7 s, 861 chars — drifts into breathing, no ATP, circular closing sentence | 82.1 s, 809 chars — chloroplasts, mitochondria, ATP |
+| fall of Rome | 36.1 s, 288 chars — the list, no dates, no West/East split | 80.1 s, 622 chars — invading peoples, 5th century AD, Byzantium to 1453 |
+
+The small model is exactly twice as fast and stops being useful where the answer needs a
+specific: that is why 1.5B is the default and why the retrieval index, not the model size,
+is the part that carries the answers.

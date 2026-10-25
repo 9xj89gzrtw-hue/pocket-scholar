@@ -119,6 +119,25 @@ emulator with Qwen2.5-1.5B. They were produced by `.github/workflows/android.yml
 emulator: install, push the model, ask a question, record the screen, stop the recording,
 pull it. Nothing is pre-baked — regenerating the demo means re-running the workflow.
 
+## Where the small models break
+
+The same APK, the same three questions, the same retrieved passages, only the weights
+changed: `small-model.yml` is `android.yml` with Qwen2.5-**0.5B** (398 MB) instead of 1.5B.
+Logged in `demo/small-model-logcat.txt`, recorded as `demo/small1-3.mp4`.
+
+| question | 0.5B (398 MB) | 1.5B (986 MB) |
+|---|---|---|
+| Bronze Age collapse | 510 chars, 41.8 s — **never names a cause or an actor**: "caused by a sudden, violent, and culturally disruptive period of societal collapse… the collapse was sudden, violent, and culturally disruptive". It restates the question. | 739 chars, 85.9 s — breaks the palace economy of Mycenaean Greece, the Hittite Empire, the Phoenicians, and ends the Late Bronze Age into the Greek Dark Ages. |
+| photosynthesis vs cellular respiration | 861 chars, 41.7 s — **drifts into breathing** ("transport of oxygen from the outside environment to bodily tissues"), no ATP, no chloroplasts or mitochondria, and closes with a loop: "cellular respiration is essential for sustaining cellular respiration". | 809 chars, 82.1 s — light energy to glucose and oxygen against glucose to ATP, in the chloroplast against the mitochondrion. |
+| fall of Rome | 288 chars, 36.1 s — the standard list with **no dates and no Western/Eastern split**: "internal struggles for power, religious changes…". | 622 chars, 80.1 s — adds invading peoples, the Western empire in the 5th century AD, and Byzantium lasting to 1453. |
+
+So the 0.5B is twice as fast and roughly half as useful: it answers fluently, and on the
+Bronze Age question it answers without saying anything. That is the argument for the 1.5B
+default — and the reason retrieval matters more than model size: both models got the same
+four passages, and the one that used them was the bigger one. The floor still behaves: at
+0.5B the app cites the sources it actually retrieved, so a reader can see the answer is
+thinner than its evidence.
+
 ## Licensing of bundled text
 
 App code is MIT. The encyclopedia extracts come from Wikipedia and are
