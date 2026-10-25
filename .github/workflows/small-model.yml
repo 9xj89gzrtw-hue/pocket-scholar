@@ -1,0 +1,148 @@
+name: small-model
+
+# Same pipeline as android.yml, but with the smallest model in the family.
+# The point is the comparison: the questions a 0.5B model cannot answer are the
+# ones the 1.5B + retrieval build does answer (see README, "Where the small models break").
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build llama.cpp for Android
+        run: |
+          set -euo pipefail
+          NDK="${ANDROID_NDK_LATEST_HOME:-$(ls -d "$ANDROID_HOME"/ndk/* | sort -V | tail -1)}"
+          echo "NDK=$NDK"
+          git clone --depth 1 --branch v0.7.0 https://github.com/ggml-org/llama.cpp /tmp/llama
+          for abi in x86_64 arm64-v8a; do
+            cmake -S /tmp/llama -B "/tmp/llama/build-$abi" \
+              -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+              -DANDROID_ABI="$abi" \
+              -DANDROID_PLATFORM=android-26 \
+              -DANDROID_STL=c++_static \
+              -DBUILD_SHARED_LIBS=OFF \
+              -DLLAMA_CURL=OFF \
+              -DGGML_OPENMP=OFF \
+              -DCMAKE_BUILD_TYPE=Release
+            cmake --build "/tmp/llama/build-$abi" --target llama-completion -j"$(nproc)"
+            mkdir -p "app/src/main/jniLibs/$abi"
+            cp "/tmp/llama/build-$abi/bin/llama-completion" "app/src/main/jniLibs/$abi/libllama-completion.so"
+            file "app/src/main/jniLibs/$abi/libllama-completion.so"
+          done
+
+      - name: Assemble APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-small-small
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+  emulator:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk-small-small
+
+      - name: Cache model
+        uses: actions/cache@v4
+        with:
+          path: model.gguf
+          key: qwen2.5-0.5b-instruct-q4_k_m-v1
+
+      - name: Fetch model
+        run: |
+          test -f model.gguf || curl -L --fail --retry 3 \
+            -o model.gguf \
+            "https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf"
+          ls -lh model.gguf
+
+      - name: Check KVM
+        run: |
+          ls -l /dev/kvm || echo "NO /dev/kvm"
+          sudo chmod 666 /dev/kvm || true
+
+      - name: Install and record the demo
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          cores: 4
+          ram-size: 4096
+          disable-animations: true
+          disable-linux-hw-accel: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none -no-snapshot
+          script: |
+            adb shell settings put global hide_error_dialogs 1
+            adb shell settings put secure anr_show_background 0
+            adb install -r app-debug.apk
+            adb shell dumpsys package org.pocketscholar > dumpsys.txt
+            test "$(grep -c 'android.permission.INTERNET' dumpsys.txt)" -eq 0
+            echo "no INTERNET permission" > permissions.txt
+            adb shell mkdir -p /sdcard/Android/data/org.pocketscholar/files
+            adb push model.gguf /sdcard/Android/data/org.pocketscholar/files/model.gguf
+            adb shell am start -n org.pocketscholar/.MainActivity
+            sleep 30
+            adb exec-out screencap -p > small-01-home.png
+            adb logcat -c
+            adb shell screenrecord --time-limit 180 --bit-rate 4000000 /sdcard/small1.mp4 &
+            sleep 2
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "What+caused+the+collapse+of+the+Bronze+Age?" --ez autorun true
+            for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
+            adb shell pkill -INT screenrecord || true
+            sleep 4
+            adb pull /sdcard/small1.mp4 small1.mp4 || true
+            adb logcat -d -s PocketScholar:* >> demo-log.txt || true
+            adb exec-out screencap -p > small-02-answer-bronze.png
+            adb logcat -c
+            adb shell screenrecord --time-limit 180 --bit-rate 4000000 /sdcard/small2.mp4 &
+            sleep 2
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Compare+photosynthesis+and+cellular+respiration" --ez autorun true
+            for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
+            adb shell pkill -INT screenrecord || true
+            sleep 4
+            adb pull /sdcard/small2.mp4 small2.mp4 || true
+            adb logcat -d -s PocketScholar:* >> demo-log.txt || true
+            adb exec-out screencap -p > small-03-answer-photosynthesis.png
+            adb logcat -c
+            adb shell screenrecord --time-limit 180 --bit-rate 4000000 /sdcard/small3.mp4 &
+            sleep 2
+            adb shell am start -n org.pocketscholar/.MainActivity --es query "Why+did+the+Roman+Empire+fall?" --ez autorun true
+            for i in $(seq 1 36); do adb logcat -d -s PocketScholar:* | grep -q answered && break; sleep 10; done
+            adb shell pkill -INT screenrecord || true
+            sleep 4
+            adb pull /sdcard/small3.mp4 small3.mp4 || true
+            adb logcat -d -s PocketScholar:* >> demo-log.txt || true
+            adb exec-out screencap -p > small-04-answer-rome.png
+            cp demo-log.txt logcat.txt || true
+            ls -lh *.png *.mp4 *.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: small-demo
+          path: |
+            *.png
+            *.mp4
+            permissions.txt
+            logcat.txt
